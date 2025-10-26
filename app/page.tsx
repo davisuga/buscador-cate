@@ -98,7 +98,7 @@ export default function JobSearchPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <label htmlFor="search-code" className="mb-2 block text-sm font-medium">
-                Código Numérico
+               Identificação (CPF ou RNE)
               </label>
               <Input
                 id="search-code"
