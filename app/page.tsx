@@ -7,69 +7,34 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Search, Briefcase, MapPin, DollarSign, Clock, GraduationCap, AlertCircle } from "lucide-react"
+import { RegistrationForm, OPTIONS } from "@/formSchema"
+import Link from "next/link"
+import { JobData, ApiResponse } from "./types"
+import {
+  labelFor,
+  EducationLevelLabels,
+  NationalityLabels,
+  HousingStatusLabels,
+  GenderLabels,
+  WorkHistoryLabels,
+  SexualOrientationLabels,
+  RaceLabels,
+  DisabilitiesLabels,
+  DiscoveredViaLabels,
+  SocialProgramLabels,
+  InterestCategoryLabels,
+} from "@/lib/enumLabels"
 
-type JobData = {
-  id: number
-  title: string
-  company: {
-    id: number
-    name: string
-    fantasy_name: string
-  }
-  salary: number
-  salary_type: string
-  hidden_salary: number
-  contract_type: string
-  benefits: string[]
-  experience_level: {
-    id: number
-    name: string
-  }
-  schooling_level: {
-    id: number
-    name: string
-  }
-  occupation: {
-    id: number
-    name: string
-  }
-  job_location_string: string
-  description?: string
-  available_seats: number
-}
 
-type ApiResponse = {
-  current_page: number
-  data: JobData[]
-  total: number
-  per_page: number
-  sum_total_jobs: string
-}
 
-type UserProfile = {
-  name: string
-  email: string
-  education: string
-  nationality: string
-  housing: string
-  gender: string
-  workHistory: string
-  orientation: string
-  race: string
-  disabilities: string
-  discoveredVia: string
-  socialPrograms: string[]
-  interests: {
-    category: string
-    items: string[]
-  }[]
-}
+// Using the RegistrationForm type inferred from the zod schema
+// (imported above as RegistrationForm)
 
 export default function JobSearchPage() {
   const [searchCode, setSearchCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [userData, setUserData] = useState<UserProfile | null>(null)
+  const [userData, setUserData] = useState<RegistrationForm | null>(null)
   const [jobs, setJobs] = useState<JobData[]>([])
   const [hasSearched, setHasSearched] = useState(false)
 
@@ -84,35 +49,16 @@ export default function JobSearchPage() {
     setHasSearched(true)
 
     try {
-      const response = await fetch(`/api/jobs?code=${searchCode}`)
-      const data: ApiResponse = await response.json()
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/user-cate?documentNumber=${searchCode}`)
+      const data = await response.json()
 
       if (!response.ok) {
         throw new Error("Código não encontrado")
       }
 
-      // Mock user data - in a real app, this would come from the API
-      setUserData({
-        name: "João Carlos Pereira",
-        email: "joao.pereira@email.com",
-        education: "Ensino Médio Completo",
-        nationality: "Brasileiro",
-        housing: "Alugada",
-        gender: "Masculino",
-        workHistory: "Auxiliar Administrativo na Empresa XYZ (2018-2022), Vendedor na Loja ABC (2022-Presente)",
-        orientation: "Heterossexual",
-        race: "Pardo",
-        disabilities: "Nenhuma",
-        discoveredVia: "Redes Sociais",
-        socialPrograms: ["Bolsa Família"],
-        interests: [
-          { category: "Esportes", items: ["Futebol", "Vôlei"] },
-          { category: "Cultura e Lazer", items: ["Cinema", "Leitura", "Música"] },
-          { category: "Tecnologia", items: ["Programação"] },
-        ],
-      })
+      // Mock user data - conforms to RegistrationSchema (minimal example)
+      setUserData(data)
 
-      setJobs(data.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao buscar dados")
       setUserData(null)
@@ -193,33 +139,49 @@ export default function JobSearchPage() {
                     <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
                       <DataField label="Nome Completo" value={userData.name} />
                       <DataField label="E-mail" value={userData.email} />
-                      <DataField label="Grau de Escolaridade" value={userData.education} />
-                      <DataField label="Nacionalidade" value={userData.nationality} />
-                      <DataField label="Situação de Moradia" value={userData.housing} />
-                      <DataField label="Gênero" value={userData.gender} />
+                      <DataField label="Grau de Escolaridade" value={labelFor(EducationLevelLabels, userData.educationLevel)} />
+                      <DataField label="Nacionalidade" value={labelFor(NationalityLabels, userData.nationality)} />
+                      <DataField label="Situação de Moradia" value={labelFor(HousingStatusLabels, userData.housingStatus)} />
+                      <DataField label="Gênero" value={labelFor(GenderLabels, userData.gender)} />
                       <DataField
                         label="Histórico de Trabalho"
-                        value={userData.workHistory}
+                        value={labelFor(WorkHistoryLabels, userData.workHistory)}
                         className="md:col-span-2 lg:col-span-3"
                       />
-                      <DataField label="Orientação Sexual" value={userData.orientation} />
-                      <DataField label="Raça / Cor" value={userData.race} />
-                      <DataField label="Deficiências" value={userData.disabilities} />
-                      <DataField label="Onde você nos conheceu?" value={userData.discoveredVia} />
+                      <DataField label="Orientação Sexual" value={labelFor(SexualOrientationLabels, userData.sexualOrientation)} />
+                      <DataField label="Raça / Cor" value={labelFor(RaceLabels, userData.race)} />
+                      <DataField label="Deficiências" value={labelFor(DisabilitiesLabels, userData.disability)} />
+                      <DataField label="Onde você nos conheceu?" value={labelFor(DiscoveredViaLabels, userData.discoveredVia)} />
                       <DataField
                         label="Programas Sociais"
-                        value={userData.socialPrograms.join(", ")}
+                        value={(userData.socialPrograms || [])
+                          .map(program => labelFor(SocialProgramLabels, program))
+                          .join(", ")}
                         className="md:col-span-2 lg:col-span-2"
                       />
                       <div className="flex flex-col gap-1 md:col-span-2 lg:col-span-3">
                         <p className="text-sm font-medium text-muted-foreground">Interesses</p>
                         <div className="flex flex-col gap-2 pt-1">
-                          {userData.interests.map((interest, idx) => (
-                            <div key={idx}>
-                              <p className="text-sm font-semibold">{interest.category}</p>
-                              <p className="text-base font-semibold">{interest.items.join(", ")}</p>
-                            </div>
-                          ))}
+                          {(() => {
+                            const interestsObj = userData.interests || {}
+                            const LABELS: Record<string, string> = {
+                              creativeEconomy: labelFor(InterestCategoryLabels, 'CREATIVE_ECONOMY'),
+                              gastronomy: labelFor(InterestCategoryLabels, 'GASTRONOMY'),
+                              managementWork: labelFor(InterestCategoryLabels, 'MANAGEMENT_WORK'),
+                              environment: labelFor(InterestCategoryLabels, 'ENVIRONMENT'),
+                              health: labelFor(InterestCategoryLabels, 'HEALTH'),
+                              technology: labelFor(InterestCategoryLabels, 'TECHNOLOGY'),
+                            }
+
+                            return Object.entries(interestsObj)
+                              .filter(([, arr]) => Array.isArray(arr) && arr.length > 0)
+                              .map(([key, arr]) => (
+                                <div key={key}>
+                                  <p className="text-sm font-semibold">{LABELS[key] ?? key}</p>
+                                  <p className="text-base font-semibold">{(arr || []).join(", ")}</p>
+                                </div>
+                              ))
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -243,7 +205,9 @@ export default function JobSearchPage() {
                               <span>{job.job_location_string}</span>
                             </div>
                           </div>
+                          <Link href={`https://cate.prefeitura.sp.gov.br/cate-vagas-admin/#/vagas/detalhes?id=${job.id}`}>
                           <Button className="w-full font-bold sm:w-auto">Ver Detalhes</Button>
+                          </Link>
                         </div>
 
                         <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-border pt-6 sm:grid-cols-2 md:grid-cols-3">
