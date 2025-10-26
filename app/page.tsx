@@ -49,7 +49,7 @@ export default function JobSearchPage() {
     setHasSearched(true)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/user-cate?documentNumber=${searchCode}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/user-profile?document=${searchCode}`)
       const data = await response.json()
 
       if (!response.ok) {
